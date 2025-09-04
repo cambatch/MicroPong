@@ -1,0 +1,3 @@
+[submodule "firmware/drivers"]
+	path = firmware/drivers
+	url = https://github.com/cambatch/nucleo-f446re-baremetal.git
