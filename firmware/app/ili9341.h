@@ -1,0 +1,84 @@
+#ifndef DRIVER_ILI9341_H
+#define DRIVER_ILI9341_H
+
+#include <stdint.h>
+
+#include "f446re.h"
+
+// SPI2 pins: PB13=SCK, PB14=MISO, PB15=MOSI
+#define ILI9341_SPI_PERIPHERAL  SPI2
+#define ILI9341_SPI_GPIO_PORT   GPIOB
+#define ILI9341_SPI_SCL_PIN     GPIO_PIN_13
+#define ILI9341_SPI_MISO_PIN    GPIO_PIN_14
+#define ILI9341_SPI_MOSI_PIN    GPIO_PIN_15
+
+// Control pins:
+#define ILI9341_CONTROL_PORT    GPIOB
+#define ILI9341_CS_PIN          GPIO_PIN_5
+#define ILI9341_DC_PIN          GPIO_PIN_6
+#define ILI9341_RST_PIN         GPIO_PIN_7
+
+#define ILI9341_TFTWIDTH   240
+#define ILI9341_TFTHEIGHT  320
+
+// Used to force the changes made on control pins to be immediate (use after setting pins LOW/HIGH)
+#define  CTRL_SYNC(port) ((void)port->odr)
+
+// Commands
+#define ILI9341_CMD_NOP              0x00
+#define ILI9341_CMD_SOFTWARE_RESET   0x01
+#define ILI9341_CMD_READ_ID          0x04
+#define ILI9341_CMD_READ_STATUS      0x09
+#define ILI9341_CMD_READ_POWER_MODE  0x0A
+#define ILI9341_CMD_READ_MADCTL      0x0B
+#define ILI9341_CMD_READ_PIXEL_FMT   0x0C
+#define ILI9341_CMD_READ_DISPLAY_ON  0x0D
+#define ILI9341_CMD_READ_ID1         0xDA
+#define ILI9341_CMD_READ_ID2         0xDB
+#define ILI9341_CMD_READ_ID3         0xDC
+
+#define ILI9341_CMD_SLEEP_OUT        0x11
+#define ILI9341_CMD_DISPLAY_OFF      0x28
+#define ILI9341_CMD_DISPLAY_ON       0x29
+#define ILI9341_CMD_COLUMN_ADDR      0x2A
+#define ILI9341_CMD_PAGE_ADDR        0x2B
+#define ILI9341_CMD_MEMORY_WRITE     0x2C
+#define ILI9341_CMD_MEMORY_READ      0x2E
+
+#define ILI9341_CMD_PARTIAL_AREA     0x30
+#define ILI9341_CMD_VERT_SCROLL_DEF  0x33
+#define ILI9341_CMD_TEARING_OFF      0x34
+#define ILI9341_CMD_TEARING_ON       0x35
+#define ILI9341_CMD_MEMORY_ACCESS    0x36
+#define ILI9341_CMD_PIXEL_FORMAT     0x3A
+
+#define ILI9341_CMD_FRAME_RATE_CTRL1 0xB1
+#define ILI9341_CMD_FRAME_RATE_CTRL2 0xB2
+#define ILI9341_CMD_FRAME_RATE_CTRL3 0xB3
+#define ILI9341_CMD_DISPLAY_INVERT   0xB4
+#define ILI9341_CMD_DISPLAY_FUNCTION 0xB6
+#define ILI9341_CMD_ENTRY_MODE       0xB7
+
+#define ILI9341_CMD_POWER_CTRL1      0xC0
+#define ILI9341_CMD_POWER_CTRL2      0xC1
+#define ILI9341_CMD_VCOM_CTRL1       0xC5
+#define ILI9341_CMD_VCOM_CTRL2       0xC7
+
+#define ILI9341_CMD_POWER_CTRL_A     0xCB
+#define ILI9341_CMD_POWER_CTRL_B     0xCF
+#define ILI9341_CMD_DRIVER_TIMING_A  0xE8
+#define ILI9341_CMD_DRIVER_TIMING_B  0xEA
+#define ILI9341_CMD_POWER_ON_SEQ     0xED
+#define ILI9341_CMD_ENABLE_3G        0xF2
+#define ILI9341_CMD_PUMP_RATIO_CTRL  0xF7
+
+#define ILI9341_CMD_GAMMA_SET        0x26
+#define ILI9341_CMD_POS_GAMMA        0xE0
+#define ILI9341_CMD_NEG_GAMMA        0xE1
+
+
+
+void ili9341_init(void);
+void ili9341_software_reset(void);
+
+#endif
