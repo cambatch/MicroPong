@@ -1,56 +1,89 @@
-MAKE := make
-STM_PROGRAMMER := STM32_Programmer_CLI
+# Toolchain
+CROSS     ?= arm-none-eabi-
+CC        := $(CROSS)gcc
+AS        := $(CROSS)gcc
+LD        := $(CROSS)gcc
+OBJCOPY   := $(CROSS)objcopy
+SIZE      := $(CROSS)size
+MAKE	  := make
+FLASH     := STM32_Programmer_CLI
 
-CC      := arm-none-eabi-gcc
-OBJCOPY := arm-none-eabi-objcopy
+APP_DIR        := app
+STARTUP_DIR    := startup
+BUILD_DIR      := build
+APP_BUILD_DIR  := $(BUILD_DIR)/app
+STARTUP_BUILD  := $(BUILD_DIR)/startup
 
-BUILD_DIR   := build
-DRIVERS_DIR := drivers
-DRIVERS_LIB := $(DRIVERS_DIR)/libf446re.a
+DRIVERS_DIR    := drivers
+DRIVERS_LIB    := $(DRIVERS_DIR)/libf446re.a
 
-APP_SRCS := startup/startup.c app/main.c app/display/ili9341.c app/pong.c
-APP_OBJS := $(addprefix $(BUILD_DIR)/,$(APP_SRCS:.c=.o))
-APP_DEPS := $(APP_OBJS:.o=.d)
+TARGET     := firmware
+ELF        := $(BUILD_DIR)/$(TARGET).elf
+BIN        := $(BUILD_DIR)/$(TARGET).bin
+MAP        := $(BUILD_DIR)/$(TARGET).elf.map
+LINKER     := link.ld
 
-COMMON_WARN := -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion -Wformat-truncation -Wconversion
-COMMON_OPT  := -g -O2 -ffunction-sections -fdata-sections -fshort-enums
-COMMON_CPU  := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# MCU/ABI flags
+MCUFLAGS := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+COMMON   := -ffunction-sections -fdata-sections -fshort-enums
+WARN     := -W -Wall -Wextra -Werror
+OPT      := -O2
+STD      := -std=c11
 
-CFLAGS  ?= $(COMMON_WARN) $(COMMON_OPT) $(COMMON_CPU) -MMD -MP \
-           -I$(DRIVERS_DIR)/include -Iapp/display $(EXTRA_CFLAGS)
+CFLAGS   := $(MCUFLAGS) $(COMMON) $(WARN) $(OPT) $(STD)
+ASFLAGS  := $(MCUFLAGS) $(COMMON)
+LDFLAGS  := $(MCUFLAGS) -T $(LINKER) -Wl,-Map=$(MAP) -Wl,--gc-sections -nostartfiles
 
-LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs \
-           -Wl,--gc-sections -Wl,-Map=$(BUILD_DIR)/firmware.elf.map
+# Include paths
+INCLUDES := -I. -Iinclude -I$(APP_DIR)/display -I$(DRIVERS_DIR)/include
 
-LDLIBS := -L$(DRIVERS_DIR) -lf446re
+# Sources
+APP_CS   := $(wildcard $(APP_DIR)/*.c) \
+			$(wildcard $(APP_DIR)/display/*.c)
+STARTUP_S:= $(STARTUP_DIR)/startup.s
 
-all: $(BUILD_DIR)/firmware.elf
+APP_OBJS     := $(patsubst $(APP_DIR)/%.c,$(APP_BUILD_DIR)/%.o,$(APP_CS))
+STARTUP_OBJ  := $(STARTUP_BUILD)/startup.o
 
-$(BUILD_DIR)/firmware.elf: $(DRIVERS_LIB) $(APP_OBJS) | $(BUILD_DIR)
-	$(CC) $(COMMON_CPU) $(APP_OBJS) -o $@ $(LDFLAGS) \
-		-Wl,--start-group $(LDLIBS) -lc -lgcc -Wl,--end-group
+LD_OBJS := $(STARTUP_OBJ) $(APP_OBJS)
 
-$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+LD_LIBS := $(DRIVERS_LIB)
+
+# ---------------------------------------------------------------------------
+
+.PHONY: all clean drivers size
+
+all: $(BUILD_DIR) drivers $(ELF) $(BIN) size
 
 $(BUILD_DIR):
-	mkdir -p $@
+	@mkdir -p $(APP_BUILD_DIR) $(STARTUP_BUILD)
 
-$(DRIVERS_LIB):
+drivers:
 	$(MAKE) -C $(DRIVERS_DIR)
 
-$(BUILD_DIR)/firmware.bin: $(BUILD_DIR)/firmware.elf
+# Compile C sources
+$(APP_BUILD_DIR)/%.o: $(APP_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(STARTUP_BUILD)/startup.o: $(STARTUP_S)
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -c $< -o $@
+
+$(ELF): $(LD_OBJS) $(LINKER) $(DRIVERS_LIB)
+	$(LD) $(LDFLAGS) $(LD_OBJS) $(LD_LIBS) -o $@
+
+$(BIN): $(ELF)
 	$(OBJCOPY) -O binary $< $@
 
-firmware.bin: $(BUILD_DIR)/firmware.bin
-
 flash: $(BUILD_DIR)/firmware.bin
-	$(STM_PROGRAMMER) -c port=SWD -d $< 0x08000000 -rst
+	$(FLASH) -c port=SWD -d $< 0x08000000 -rst
+
+size: $(ELF)
+	$(SIZE) --format=berkeley $(ELF)
 
 clean:
+	$(MAKE) -C $(DRIVERS_DIR) clean || true
 	rm -rf $(BUILD_DIR)
-	$(MAKE) -C $(DRIVERS_DIR) clean
 
-.PHONY: all clean flash
--include $(APP_DEPS)
+-include $(APP_OBJS:.o=.d)
