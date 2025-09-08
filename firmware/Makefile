@@ -7,7 +7,7 @@ BUILD_DIR   := build
 DRIVERS_DIR := drivers
 DRIVERS_LIB := $(DRIVERS_DIR)/libf446re.a
 
-APP_SRCS := startup/startup.c app/main.c app/ili9341.c
+APP_SRCS := startup/startup.c app/main.c app/display/ili9341.c
 APP_OBJS := $(addprefix $(BUILD_DIR)/,$(APP_SRCS:.c=.o))
 APP_DEPS := $(APP_OBJS:.o=.d)
 
@@ -16,7 +16,7 @@ COMMON_OPT  := -g -O2 -ffunction-sections -fdata-sections -fshort-enums
 COMMON_CPU  := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 CFLAGS  ?= $(COMMON_WARN) $(COMMON_OPT) $(COMMON_CPU) -MMD -MP \
-           -I$(DRIVERS_DIR)/include $(EXTRA_CFLAGS)
+           -I$(DRIVERS_DIR)/include -Iapp/display $(EXTRA_CFLAGS)
 
 LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs \
            -Wl,--gc-sections -Wl,-Map=$(BUILD_DIR)/firmware.elf.map
