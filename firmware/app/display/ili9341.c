@@ -211,10 +211,15 @@ void ili9341_set_rotation(ili9341_rot_t rotation)
     ili9341_send_cmd_data(ILI9341_CMD_MEMORY_ACCESS, &g_context.madctl, 1);
 }
 
-
 ili9341_rot_t ili9341_get_rotation(void)
 {
     return g_context.rotation;
+}
+
+void ili9341_get_screen_size(uint16_t *width, uint16_t *height)
+{
+    *width = g_context.width;
+    *height = g_context.height;
 }
 
 void ili9341_set_invert(bool enable)

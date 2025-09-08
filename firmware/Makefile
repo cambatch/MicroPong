@@ -7,7 +7,7 @@ BUILD_DIR   := build
 DRIVERS_DIR := drivers
 DRIVERS_LIB := $(DRIVERS_DIR)/libf446re.a
 
-APP_SRCS := startup/startup.c app/main.c app/display/ili9341.c
+APP_SRCS := startup/startup.c app/main.c app/display/ili9341.c app/pong.c
 APP_OBJS := $(addprefix $(BUILD_DIR)/,$(APP_SRCS:.c=.o))
 APP_DEPS := $(APP_OBJS:.o=.d)
 

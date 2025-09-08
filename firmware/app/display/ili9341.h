@@ -164,6 +164,8 @@ void ili9341_set_rotation(ili9341_rot_t rotation);
  */
 ili9341_rot_t ili9341_get_rotation(void);
 
+void ili9341_get_screen_size(uint16_t *width, uint16_t *height);
+
 /**
  * @brief Enables or disables display color inversion.
  *
