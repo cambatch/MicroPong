@@ -1,4 +1,5 @@
 MAKE := make
+STM_PROGRAMMER := STM32_Programmer_CLI
 
 CC      := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
@@ -45,7 +46,7 @@ $(BUILD_DIR)/firmware.bin: $(BUILD_DIR)/firmware.elf
 firmware.bin: $(BUILD_DIR)/firmware.bin
 
 flash: $(BUILD_DIR)/firmware.bin
-	STM32_Programmer_CLI -c port=SWD -d $< 0x08000000 -rst
+	$(STM_PROGRAMMER) -c port=SWD -d $< 0x08000000 -rst
 
 clean:
 	rm -rf $(BUILD_DIR)
